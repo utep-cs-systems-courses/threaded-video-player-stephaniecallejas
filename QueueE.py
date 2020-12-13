@@ -1,5 +1,5 @@
 import threading
-from threading import Semaphore
+from threading import Semaphore, Lock
 
 """Lab 3 Threaded Video Player
    Stephanie Callejas
@@ -24,13 +24,16 @@ class QueueE:
         self.capacity = capacity
         self.semaphoreCapacity = threading.Semaphore(capacity)
         self.semaphoreUsed = threading.Semaphore(0)
+        self.mutex = Lock()
 
     #When adding to the queue, we have to check that it doesn't go over the capacity
     #(not going below 0 in the semaphoreCapacity) and updating the number of current
     #items with semaphoreUsed
     def enqueue(self, item):
         self.semaphoreCapacity.acquire()
+        self.mutex.acquire()
         self.queue.append(item)
+        self.mutex.release()
         self.semaphoreUsed.release()
 
     #When getting items from the queue we have to first check that we have something
@@ -39,7 +42,9 @@ class QueueE:
     #semaphoreCapacity 
     def dequeue(self):
         self.semaphoreUsed.acquire()
+        self.mutex.acquire()
         item = self.queue.pop(0)
+        self.mutex.release()
         self.semaphoreCapacity.release()
         return item
 
